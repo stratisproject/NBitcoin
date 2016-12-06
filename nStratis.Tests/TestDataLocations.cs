@@ -50,19 +50,20 @@ namespace nStratis.Tests
 		public static string DataFolder(string file)
 		{
 			var current = Directory.GetCurrentDirectory();
-			if(Directory.Exists($@"{current}\data"))
+			var dirChar = Path.DirectorySeparatorChar;
+			if(Directory.Exists($@"{current}{dirChar}data"))
 			{
-				return $@"{current}\data\{file}";
+				return $@"{current}{dirChar}data{dirChar}{file}";
 			}
 
-			if (Directory.Exists($@"{current}\bin\Debug\netcoreapp1.0\data"))
+			if (Directory.Exists($@"{current}{dirChar}bin{dirChar}Debug{dirChar}netcoreapp1.0{dirChar}data"))
 			{
-				return $@"{current}\bin\Debug\netcoreapp1.0\data\{file}";
+				return $@"{current}{dirChar}bin{dirChar}Debug{dirChar}netcoreapp1.0{dirChar}data{dirChar}{file}";
 			}
 
-			if (Directory.Exists($@"{current}\bin\Debug\netcoreapp1.1\data"))
+			if (Directory.Exists($@"{current}{dirChar}bin{dirChar}Debug{dirChar}netcoreapp1.1{dirChar}data"))
 			{
-				return $@"{current}\bin\Debug\netcoreapp1.1\data\{file}";
+				return $@"{current}{dirChar}bin{dirChar}Debug{dirChar}netcoreapp1.1{dirChar}data{dirChar}{file}";
 			}
 
 			throw new DirectoryNotFoundException();
