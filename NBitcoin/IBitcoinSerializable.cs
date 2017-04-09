@@ -1,10 +1,6 @@
-﻿using NBitcoin.Protocol;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NBitcoin.Protocol;
 
 namespace NBitcoin
 {
@@ -40,6 +36,19 @@ namespace NBitcoin
 		public static int GetSerializedSize(this IBitcoinSerializable serializable, ProtocolVersion version = ProtocolVersion.PROTOCOL_VERSION)
 		{
 			return GetSerializedSize(serializable, version, SerializationType.Disk);
+		}
+
+		public static string ToHex(this IBitcoinSerializable serializable, SerializationType serializationType = SerializationType.Disk)
+		{
+			using (var memoryStream = new MemoryStream())
+			{
+				BitcoinStream bitcoinStream = new BitcoinStream(memoryStream, true);
+				bitcoinStream.Type = serializationType;
+				bitcoinStream.ReadWrite(serializable);
+				memoryStream.Seek(0, SeekOrigin.Begin);
+				var bytes = memoryStream.ReadBytes((int)memoryStream.Length);
+				return DataEncoders.Encoders.Hex.EncodeData(bytes);
+			}
 		}
 
 		public static void ReadWrite(this IBitcoinSerializable serializable, byte[] bytes, ProtocolVersion version = ProtocolVersion.PROTOCOL_VERSION)

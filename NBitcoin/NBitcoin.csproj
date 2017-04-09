@@ -67,11 +67,15 @@
     </Compile>
     <Compile Include="BitcoinCore\CachedBlockProvider.cs" />
     <Compile Include="BitWriter.cs" />
+    <Compile Include="BlockValidator.cs" />
+    <Compile Include="BlockSignature.cs" />
     <Compile Include="BuilderExtensions\BuilderExtension.cs" />
     <Compile Include="BuilderExtensions\OPTrueExtension.cs" />
     <Compile Include="BuilderExtensions\P2MultiSigBuilderExtension.cs" />
     <Compile Include="BuilderExtensions\P2PKBuilderExtension.cs" />
     <Compile Include="BuilderExtensions\P2PKHBuilderExtension.cs" />
+    <Compile Include="Crypto\HashX13.cs" />
+    <Compile Include="DataEncoders\Bech32Encoder.cs" />
     <Compile Include="FeeRate.cs" />
     <Compile Include="JsonConverters\AssetIdJsonConverter.cs" />
     <Compile Include="JsonConverters\Base58JsonConverter.cs" />
@@ -90,6 +94,7 @@
     <Compile Include="JsonConverters\NetworkJsonConverter.cs" />
     <Compile Include="JsonConverters\ScriptJsonConverter.cs" />
     <Compile Include="JsonConverters\UIntJsonConverter.cs" />
+    <Compile Include="Networks.cs" />
     <Compile Include="NetworkBuilder.cs" />
     <Compile Include="OpenAsset\NullColoredTransactionRepository.cs" />
     <Compile Include="Payment\IChainChecker.cs" />
@@ -137,6 +142,7 @@
     <Compile Include="Payment\PaymentRequest.cs" />
     <Compile Include="Payment\UriHelper.cs" />
     <Compile Include="Payment\HttpUtility.cs" />
+    <Compile Include="BlockStake.cs" />
     <Compile Include="PrecomputedTransactionData.cs" />
     <Compile Include="Protobuf\ProtobufReaderWriter.cs" />
     <Compile Include="Protocol\AddressManager.cs" />
@@ -159,8 +165,11 @@
     <Compile Include="Protocol\Payloads\SendCmpctPayload.cs" />
     <Compile Include="Protocol\Payloads\SendHeadersPayload.cs" />
     <Compile Include="Protocol\Payloads\UTxOutputPayload.cs" />
+    <Compile Include="RPC\FundRawTransactionOptions.cs" />
+    <Compile Include="RPC\FundRawTransactionResponse.cs" />
     <Compile Include="RPC\RestClient.cs" />
     <Compile Include="Policy\StandardTransactionPolicy.cs" />
+    <Compile Include="RPC\SatoshiBlockFormatter.cs" />
     <Compile Include="Sequence.cs" />
     <Compile Include="SequenceLock.cs" />
     <Compile Include="Utils\ActionDisposable.cs" />
@@ -297,8 +306,12 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BitcoinStream.Partial.cs</LastGenOutput>
     </None>
-    <None Include="NBitcoin.Tokenized.nuspec" />
-    <None Include="packages.config" />
+    <None Include="NStratis.Tokenized.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="PushNuget.ps1" />
     <Compile Include="RPC\RPCClient.Wallet.cs" />
     <None Include="UInt256.tt">
@@ -443,7 +456,12 @@
     <Compile Include="BouncyCastle\util\io\Streams.cs" />
     <Compile Include="BouncyCastle\util\Platform.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Hashing\HashLib\HashLib.csproj">
+      <Project>{31880fb6-5b86-42b8-ab92-864045b5d7a2}</Project>
+      <Name>HashLib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

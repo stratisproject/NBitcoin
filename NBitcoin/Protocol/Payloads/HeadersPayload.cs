@@ -31,6 +31,11 @@ namespace NBitcoin.Protocol
 				stream.ReadWrite(ref _Header);
 				VarInt txCount = new VarInt(0);
 				stream.ReadWrite(ref txCount);
+
+				// stratis adds an additional byte to the end of a header need to investigate why
+				if (Transaction.TimeStamp)
+					stream.ReadWrite(ref txCount);
+
 			}
 
 			#endregion

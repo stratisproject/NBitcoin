@@ -1,9 +1,6 @@
-﻿using NBitcoin.DataEncoders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using NBitcoin;
+using NBitcoin.DataEncoders;
 
 namespace NBitcoin
 {

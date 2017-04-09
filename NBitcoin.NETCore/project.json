@@ -1,10 +1,11 @@
 {
-  "version" : "1.0.0.0",
-  "name": "NBitcoin",
+  "version": "1.0.0.0",
+  "name": "NStratis",
   "dependencies": {
     "Newtonsoft.Json": "9.0.1",
-	"NETStandard.Library": "1.6.0",
-	"System.Net.Requests": "4.0.11"
+    "NETStandard.Library": "1.6.0",
+    "System.Net.Requests": "4.0.11",
+    "HashLib.NETCore": "1.0.0.0"
   },
   "frameworks": {
       "netstandard1.3": {
@@ -37,8 +38,8 @@
 	}
   },
   "buildOptions": {
-	"outputName": "NBitcoin",
-	"debugType": "portable",
+    "outputName": "NStratis",
+    "debugType": "portable",
     "define": [
       "TRACE",
       "NETCORE",

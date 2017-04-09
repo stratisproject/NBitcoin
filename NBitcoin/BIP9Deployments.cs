@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NBitcoin
 {
@@ -23,7 +19,7 @@ namespace NBitcoin
 		}
 
 		public BIP9DeploymentsParameters(int bit, long startTime, long timeout)
-			: this(bit, Utils.UnixTimeToDateTime(startTime), Utils.UnixTimeToDateTime(timeout))
+			: this(bit, (DateTimeOffset) Utils.UnixTimeToDateTime(startTime), Utils.UnixTimeToDateTime(timeout))
 		{
 
 		}

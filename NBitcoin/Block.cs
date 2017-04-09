@@ -40,9 +40,8 @@ namespace NBitcoin
 			this.ReadWrite(bytes);
 		}
 
-
 		// header
-		const int CURRENT_VERSION = 3;
+		public static int CURRENT_VERSION = 7;
 
 		uint256 hashPrevBlock;
 
@@ -60,6 +59,18 @@ namespace NBitcoin
 		uint256 hashMerkleRoot;
 
 		uint nTime;
+		public uint Time
+		{
+			get
+			{
+				return nTime;
+			}
+			set
+			{
+				nTime = value;
+			}
+		}
+
 		uint nBits;
 
 		public Target Bits
@@ -136,7 +147,7 @@ namespace NBitcoin
 				return (nBits == 0);
 			}
 		}
-#region IBitcoinSerializable Members
+		#region IBitcoinSerializable Members
 
 		public void ReadWrite(BitcoinStream stream)
 		{
@@ -148,25 +159,41 @@ namespace NBitcoin
 			stream.ReadWrite(ref nNonce);
 		}
 
-#endregion
+		#endregion
 
 		public uint256 GetHash()
 		{
 			uint256 h = null;
 			var hashes = _Hashes;
-			if(hashes != null)
+			if (hashes != null)
 			{
 				h = hashes[0];
 			}
-			if(h != null)
+			if (h != null)
 				return h;
-			h = Hashes.Hash256(this.ToBytes());
+			if (Block.BlockSignature)
+			{
+				if (this.nVersion > 6)
+					h = Hashes.Hash256(this.ToBytes());
+				else
+					h = this.GetPoWHash();
+			}
+			else
+			{
+				h = Hashes.Hash256(this.ToBytes());
+
+			}
 			hashes = _Hashes;
-			if(hashes != null)
+			if (hashes != null)
 			{
 				hashes[0] = h;
 			}
 			return h;
+		}
+
+		public uint256 GetPoWHash()
+		{
+			return HashX13.Instance.Hash(this.ToBytes());
 		}
 
 		/// <summary>
@@ -196,9 +223,11 @@ namespace NBitcoin
 		public bool CheckProofOfWork()
 		{
 			var bits = Bits.ToBigInteger();
-			if(bits.CompareTo(BigInteger.Zero) <= 0 || bits.CompareTo(Pow256) >= 0)
+			if (bits.CompareTo(BigInteger.Zero) <= 0 || bits.CompareTo(Pow256) >= 0)
 				return false;
 			// Check proof of work matches claimed amount
+			if (Block.BlockSignature) // note this can only be called on a POW block
+				return GetPoWHash() <= Bits.ToUInt256();
 			return GetHash() <= Bits.ToUInt256();
 		}
 
@@ -239,11 +268,11 @@ namespace NBitcoin
 			var mtp = prev.GetMedianTimePast() + TimeSpan.FromSeconds(1);
 			var nNewTime = mtp > now ? mtp : now;
 
-			if(nOldTime < nNewTime)
+			if (nOldTime < nNewTime)
 				this.BlockTime = nNewTime;
 
 			// Updating time can change work required on testnet:
-			if(consensus.PowAllowMinDifficultyBlocks)
+			if (consensus.PowAllowMinDifficultyBlocks)
 				Bits = GetWorkRequired(consensus, prev);
 		}
 
@@ -269,8 +298,7 @@ namespace NBitcoin
 		}
 	}
 
-
-	public class Block : IBitcoinSerializable
+	public partial class Block : IBitcoinSerializable
 	{
 		//FIXME: it needs to be changed when Gavin Andresen increase the max block size. 
 		public const uint MAX_BLOCK_SIZE = 1000 * 1000;
@@ -317,6 +345,8 @@ namespace NBitcoin
 		{
 			stream.ReadWrite(ref header);
 			stream.ReadWrite(ref vtx);
+			if(Block.BlockSignature)
+				stream.ReadWrite(ref blockSignature);
 		}
 
 		public bool HeaderOnly
@@ -368,11 +398,11 @@ namespace NBitcoin
 		/// <returns>A new block with only the options wanted</returns>
 		public Block WithOptions(TransactionOptions options)
 		{
-			if(Transactions.Count == 0)
+			if (Transactions.Count == 0)
 				return this;
-			if(options == TransactionOptions.Witness && Transactions[0].HasWitness)
+			if (options == TransactionOptions.Witness && Transactions[0].HasWitness)
 				return this;
-			if(options == TransactionOptions.None && !Transactions[0].HasWitness)
+			if (options == TransactionOptions.None && !Transactions[0].HasWitness)
 				return this;
 			var instance = new Block();
 			var ms = new MemoryStream();
@@ -397,6 +427,9 @@ namespace NBitcoin
 		/// <returns></returns>
 		public bool Check()
 		{
+			if (Block.BlockSignature)
+				return BlockStake.Check(this);
+
 			return CheckMerkleRoot() && Header.CheckProofOfWork();
 		}
 
@@ -416,7 +449,7 @@ namespace NBitcoin
 		}
 		public Block CreateNextBlockWithCoinbase(BitcoinAddress address, int height, DateTimeOffset now)
 		{
-			if(address == null)
+			if (address == null)
 				throw new ArgumentNullException("address");
 			Block block = new Block();
 			block.Header.Nonce = RandomUtils.GetUInt32();
@@ -469,7 +502,7 @@ namespace NBitcoin
 			blk.Header.Version = (int)block["ver"];
 			blk.Header.HashPrevBlock = uint256.Parse((string)block["prev_block"]);
 			blk.Header.HashMerkleRoot = uint256.Parse((string)block["mrkl_root"]);
-			foreach(var tx in txs)
+			foreach (var tx in txs)
 			{
 				blk.AddTransaction(formatter.Parse((JObject)tx));
 			}
@@ -491,4 +524,5 @@ namespace NBitcoin
 			return new MerkleBlock(this, filter);
 		}
 	}
+
 }

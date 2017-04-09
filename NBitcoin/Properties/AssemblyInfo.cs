@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("NBitcoin")]
-[assembly: AssemblyDescription("Implementation of bitcoin protocol")]
+[assembly: AssemblyTitle("NStratis")]
+[assembly: AssemblyDescription("Implementation of stratis protocol")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("AO-IS")]
-[assembly: AssemblyProduct("NBitcoin")]
+[assembly: AssemblyProduct("NStratis")]
 [assembly: AssemblyCopyright("Copyright © AO-IS 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -31,6 +31,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("3.0.2.10")]
-[assembly: AssemblyFileVersion("3.0.2.10")]
-[assembly: AssemblyInformationalVersion("3.0.2.10")]
+[assembly: AssemblyVersion("3.0.2.13")]
+[assembly: AssemblyFileVersion("3.0.2.13")]
+[assembly: AssemblyInformationalVersion("3.0.2.13")]

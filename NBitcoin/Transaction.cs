@@ -1,13 +1,12 @@
-﻿using NBitcoin.Crypto;
-using NBitcoin.DataEncoders;
-using NBitcoin.Protocol;
-using NBitcoin.RPC;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NBitcoin.Crypto;
+using NBitcoin.DataEncoders;
+using NBitcoin.Protocol;
+using NBitcoin.Protocol.Payloads;
+using NBitcoin.RPC;
 
 namespace NBitcoin
 {
@@ -551,7 +550,9 @@ namespace NBitcoin
 			}
 		}
 
-		public TxOut()
+        public bool IsEmpty => (this.Value == 0 && this.ScriptPubKey.Length == 0);
+
+	    public TxOut()
 		{
 
 		}
@@ -1101,11 +1102,13 @@ namespace NBitcoin
 	//https://en.bitcoin.it/wiki/Protocol_specification
 	public class Transaction : IBitcoinSerializable
 	{
+		public static bool TimeStamp = false;
+
 		public bool RBF
 		{
 			get
 			{
-				return Inputs.Any(i => i.Sequence < 0xffffffff - 1);
+				return this.Inputs.Any(i => i.Sequence < 0xffffffff - 1);
 			}
 		}
 
@@ -1119,10 +1122,25 @@ namespace NBitcoin
 			}
 			set
 			{
-				nVersion = value;
+			    this.nVersion = value;
 			}
 		}
-		TxInList vin;
+
+        private uint nTime = Utils.DateTimeToUnixTime(DateTime.UtcNow);
+
+        public uint Time
+        {
+            get
+            {
+                return this.nTime;
+            }
+            set
+            {
+                this.nTime = value;
+            }
+        }
+
+        TxInList vin;
 		TxOutList vout;
 		LockTime nLockTime;
 
@@ -1193,8 +1211,13 @@ namespace NBitcoin
 			if(!stream.Serializing)
 			{
 				stream.ReadWrite(ref nVersion);
-				/* Try to read the vin. In case the dummy is there, this will be read as an empty vector. */
-				stream.ReadWrite<TxInList, TxIn>(ref vin);
+
+				// the POS time stamp
+				if (Transaction.TimeStamp)
+					stream.ReadWrite(ref this.nTime);
+
+                /* Try to read the vin. In case the dummy is there, this will be read as an empty vector. */
+                stream.ReadWrite<TxInList, TxIn>(ref vin);
 
 				var hasNoDummy = (nVersion & NoDummyInput) != 0 && vin.Count == 0;
 				if(witSupported && hasNoDummy)
@@ -1243,7 +1266,11 @@ namespace NBitcoin
 				var version = (witSupported && (vin.Count == 0 && vout.Count > 0)) ? nVersion | NoDummyInput : nVersion;
 				stream.ReadWrite(ref version);
 
-				if(witSupported)
+				// the POS time stamp
+				if (Transaction.TimeStamp)
+					stream.ReadWrite(ref this.nTime);
+
+                if (witSupported)
 				{
 					/* Check whether witnesses need to be serialized. */
 					if(HasWitness)
@@ -1272,6 +1299,7 @@ namespace NBitcoin
 		}
 
 		#endregion
+
 
 		public uint256 GetHash()
 		{
@@ -1372,11 +1400,25 @@ namespace NBitcoin
 		{
 			get
 			{
-				return (Inputs.Count == 1 && Inputs[0].PrevOut.IsNull);
+				return this.Inputs.Count == 1 
+                    && this.Inputs.First().PrevOut.IsNull 
+                    && this.Outputs.Count >= 1;
 			}
 		}
 
-		public static uint CURRENT_VERSION = 2;
+	    public bool IsCoinStake
+	    {
+	        get
+	        {
+	            // ppcoin: the coin stake transaction is marked with the first output empty
+	            return this.Inputs.Any() 
+                    && !this.Inputs.First().PrevOut.IsNull 
+                    && this.Outputs.Count() >= 2 
+                    && this.Outputs.First().IsEmpty;
+	        }
+	    }
+
+	    public static uint CURRENT_VERSION = 2;
 		public static uint MAX_STANDARD_TX_SIZE = 100000;
 
 		public TxOut AddOutput(Money money, IDestination destination)
@@ -1780,7 +1822,7 @@ namespace NBitcoin
 		}
 
 		private static readonly uint MAX_BLOCK_SIZE = 1000000;
-		private static readonly ulong MAX_MONEY = 21000000ul * Money.COIN;
+		private static readonly ulong MAX_MONEY = long.MaxValue; // 21000000ul * Money.COIN;
 
 		/// <summary>
 		/// Context free transaction check

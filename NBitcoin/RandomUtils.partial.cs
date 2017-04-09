@@ -53,14 +53,14 @@ namespace NBitcoin
 		{
 			_Instance = RandomNumberGenerator.Create();
 		}
-		#region IRandom Members
+#region IRandom Members
 
 		public void GetBytes(byte[] output)
 		{
 			_Instance.GetBytes(output);
 		}
 
-		#endregion
+#endregion
 	}
 
 	public partial class RandomUtils
