@@ -110,6 +110,7 @@ namespace NBitcoin.Tests
 				Assert.True(seed.State == NodeState.HandShaked);
 				seed.Disconnect();
 				Assert.True(seed.State == NodeState.Offline);
+				Assert.NotNull(seed.TimeOffset);
 			}
 		}
 
@@ -428,6 +429,7 @@ namespace NBitcoin.Tests
 				Assert.Equal(NodeState.HandShaked, toS2.State);
 				Thread.Sleep(100); //Let the time to Server2 to add the new node, else the test was failing sometimes.
 				Assert.Equal(NodeState.HandShaked, tester.Node2.State);
+				Assert.NotNull(toS2.TimeOffset);
 			}
 		}
 
