@@ -3,6 +3,7 @@ using NBitcoin.Protocol;
 using NBitcoin.Stealth;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -587,6 +588,7 @@ namespace NBitcoin
 			{
 				return nRPCPort;
 			}
+			set { nRPCPort = value; }
 		}
 
 		private int nDefaultPort;
@@ -622,18 +624,24 @@ namespace NBitcoin
 			}
 		}
 
+		public static bool UseSingleNetwork = true; // must be a field so that it can be set before ctor executes
+
 		static Network()
 		{
-			_Main = new Network();
-			_Main.InitMain();
-			_Main.Consensus.Freeze();
+			if (!UseSingleNetwork)
+			{
+				_Main = new Network();
+				_Main.InitMain();
+				_Main.Consensus.Freeze();
 
-			_TestNet = new Network();
-			_TestNet.InitTest();
-			_TestNet.Consensus.Freeze();
+				_TestNet = new Network();
+				_TestNet.InitTest();
+				_TestNet.Consensus.Freeze();
 
-			_RegTest = new Network();
-			_RegTest.InitReg();
+				_RegTest = new Network();
+				_RegTest.InitReg();
+			}
+			
 		}
 
 		static Network _Main;
@@ -671,6 +679,7 @@ namespace NBitcoin
 				throw new InvalidOperationException("A network name need to be provided");
 			if(GetNetwork(builder._Name) != null)
 				throw new InvalidOperationException("The network " + builder._Name + " is already registered");
+
 			Network network = new Network();
 			network.name = builder._Name;
 			network.consensus = builder._Consensus;
@@ -691,16 +700,44 @@ namespace NBitcoin
 				network.vFixedSeeds.Add(seed);
 			}
 #endif
-			network.base58Prefixes = Network.Main.base58Prefixes.ToArray();
-			foreach(var kv in builder._Base58Prefixes)
+			if (Network.Main != null && Network.Main.base58Prefixes != null)
 			{
-				network.base58Prefixes[(int)kv.Key] = kv.Value;
+				network.base58Prefixes = Network.Main.base58Prefixes.ToArray();
+				foreach (var kv in builder._Base58Prefixes)
+				{
+					network.base58Prefixes[(int) kv.Key] = kv.Value;
+				}
 			}
-			network.bech32Encoders = Network.Main.bech32Encoders.ToArray();
-			foreach(var kv in builder._Bech32Prefixes)
+			else
 			{
-				network.bech32Encoders[(int)kv.Key] = kv.Value;
+				var pcount = builder._Base58Prefixes.Count;
+				Debug.Assert(pcount == 12);
+				network.base58Prefixes = new byte[12][];
+				for (int i = 0; i < pcount; i++)
+				{
+					network.base58Prefixes[i] = builder._Base58Prefixes[(Base58Type)i];
+				}
 			}
+			if (Network.Main != null && Network.Main.base58Prefixes != null)
+			{
+				network.bech32Encoders = Network.Main.bech32Encoders.ToArray();
+				foreach (var kv in builder._Bech32Prefixes)
+				{
+					network.bech32Encoders[(int) kv.Key] = kv.Value;
+				}
+			}
+			else
+			{
+				var bcount = builder._Bech32Prefixes.Count;
+				Debug.Assert(bcount == 2);
+				network.bech32Encoders = new Bech32Encoder[2];
+				for (int i = 0; i < bcount; i++)
+				{
+					network.bech32Encoders[i] = builder._Bech32Prefixes[(Bech32Type)i];
+				}
+			}
+		
+
 			lock(_OtherAliases)
 			{
 				foreach (var alias in builder._Aliases)
@@ -715,6 +752,8 @@ namespace NBitcoin
 			}
 			return network;
 		}
+
+		
 
 		private void InitMain()
 		{
@@ -1248,9 +1287,12 @@ namespace NBitcoin
 
 		public static IEnumerable<Network> GetNetworks()
 		{
-			yield return Main;
-			yield return TestNet;
-			yield return RegTest;
+			if (!UseSingleNetwork)
+			{
+				yield return Main;
+				yield return TestNet;
+				yield return RegTest;
+			}
 
 			if(_OtherNetworks.Count != 0)
 			{
