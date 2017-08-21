@@ -624,11 +624,10 @@ namespace NBitcoin
 			}
 		}
 
-		public static bool UseSingleNetwork = true; // must be a field so that it can be set before ctor executes
 
 		static Network()
 		{
-			if (!UseSingleNetwork)
+			if (!NetworkConfig.UseSingleNetwork)
 			{
 				_Main = new Network();
 				_Main.InitMain();
@@ -1287,7 +1286,7 @@ namespace NBitcoin
 
 		public static IEnumerable<Network> GetNetworks()
 		{
-			if (!UseSingleNetwork)
+			if (!NetworkConfig.UseSingleNetwork)
 			{
 				yield return Main;
 				yield return TestNet;
@@ -1396,6 +1395,7 @@ namespace NBitcoin
 		}
 #endif
 		public byte[] _MagicBytes;
+
 		public byte[] MagicBytes
 		{
 			get
