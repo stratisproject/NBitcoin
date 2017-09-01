@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using NBitcoin.Crypto;
+﻿using NBitcoin.Crypto;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -823,7 +822,7 @@ namespace NBitcoin
 								}
 
 
-							case OpcodeType.OP_NOP4:
+							//case OpcodeType.OP_NOP4:
 							case OpcodeType.OP_NOP5:
 							case OpcodeType.OP_NOP6:
 							case OpcodeType.OP_NOP7:
@@ -1463,6 +1462,22 @@ namespace NBitcoin
 									}
 									break;
 								}
+
+							case OpcodeType.OP_WITHDRAWPROOFVERIFY:
+
+								{
+
+									// There are two cases
+									// 1. a locking output that will verify the output amount is correct
+									// 2. a spending output that will unlock some coins
+
+
+									if (_stack.Count != 2 )
+										return SetError(ScriptError.InvalidStackOperation);
+
+										break;
+								}
+
 							default:
 								return SetError(ScriptError.BadOpCode);
 						}

@@ -1,10 +1,10 @@
-﻿using System.Runtime.InteropServices;
-using NBitcoin.Crypto;
+﻿using NBitcoin.Crypto;
 using NBitcoin.DataEncoders;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NBitcoin
@@ -308,6 +308,7 @@ namespace NBitcoin
 		OP_NOP2 = 0xb1,
 		OP_NOP3 = 0xb2,
 		OP_NOP4 = 0xb3,
+		OP_WITHDRAWPROOFVERIFY = OP_NOP4,
 		OP_NOP5 = 0xb4,
 		OP_NOP6 = 0xb5,
 		OP_NOP7 = 0xb6,
