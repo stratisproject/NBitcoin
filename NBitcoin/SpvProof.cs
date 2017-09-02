@@ -19,7 +19,12 @@ namespace NBitcoin
 
     public class SpvProof
     {
-	    private List<BlockHeader> Headers;
+	    public List<BlockHeader> Headers;
 
+	    public uint256 ParentGenesis;
+
+	    public Transaction Lock;
+
+		public MerkleBlock
     }
 }
