@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace NBitcoin
 {
@@ -19,12 +18,16 @@ namespace NBitcoin
 
     public class SpvProof
     {
-	    public List<BlockHeader> Headers;
+	    public List<BlockHeader> SpvHeaders;
 
-	    public uint256 ParentGenesis;
+	    public uint256 Genesis;
 
 	    public Transaction Lock;
 
-		public MerkleBlock
+	    public Transaction CoinBase;
+
+	    public Transaction CoinStake;
+
+		public PartialMerkleTree MerkleProof;
     }
 }
