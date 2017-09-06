@@ -11,6 +11,14 @@ namespace NBitcoin
 		{
 
 		}
+
+		public PartialMerkleTree(byte[] bytes)
+			: this()
+		{
+			this.FromBytes(bytes);
+		}
+
+
 		uint _TransactionCount;
 		public uint TransactionCount
 		{

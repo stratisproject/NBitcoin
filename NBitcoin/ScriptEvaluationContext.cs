@@ -1472,10 +1472,26 @@ namespace NBitcoin
 									// 2. a spending output that will unlock some coins
 
 
-									if (_stack.Count != 2 )
+									if (_stack.Count != 5)
 										return SetError(ScriptError.InvalidStackOperation);
 
-										break;
+
+									var arrayList = new List<byte[]>
+									{
+										_stack.Pop(),
+										_stack.Pop(),
+										_stack.Pop(),
+										_stack.Pop(),
+										_stack.Pop(),
+									};
+
+									arrayList.Reverse();
+									var proof = SpvProof.CreateProof(arrayList);
+
+									// validate all items.
+
+
+									break;
 								}
 
 							default:
