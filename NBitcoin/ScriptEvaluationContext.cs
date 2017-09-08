@@ -1479,9 +1479,14 @@ namespace NBitcoin
 							case OpcodeType.OP_WITHDRAWPROOFVERIFY:
 
 								{
-									// There are two cases
-									// 1. a locking output that will verify the output amount is correct
-									// 2. a spending output that will unlock some coins
+									// This op code expects the following on the stack
+									// 1. a list of spv headers
+									// 2. a MerkleProof of the locking trx on the parent chain
+									// 3. the OutputIndex of the locking trx
+									// 4. the locking trx itself
+									// 5. the CoinBase of the block the lock was confirmed in 
+									// 6. Genesis of parent
+									// 7. ScriptPubKey of the destination script
 
 									if (_stack.Count != 7)
 										return SetError(ScriptError.InvalidStackOperation);
