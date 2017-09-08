@@ -61,6 +61,19 @@ namespace NBitcoin
 		NullFail,
 		MinimalIf,
 		WitnessPubkeyType,
+
+		/* sidechains */
+		WithdrawVerifyFormat,
+		WithdrawVerifyBlock,
+		WithdrawVerifyLockTx,
+		WithdrawVerifyOutput,
+		WithdrawVerifyOutputScriptdest,
+		WithdrawVerifyRelockScriptval,
+		WithdrawVerifyOutputval,
+		WithdrawVerifyOutputscript,
+
+		WithdrawVerifyBlockUnconfirmed,
+		WithdrawVerifyBlindedAmounts,
 	}
 
 	public class TransactionChecker
@@ -1466,30 +1479,74 @@ namespace NBitcoin
 							case OpcodeType.OP_WITHDRAWPROOFVERIFY:
 
 								{
-
 									// There are two cases
 									// 1. a locking output that will verify the output amount is correct
 									// 2. a spending output that will unlock some coins
 
-
-									if (_stack.Count != 5)
+									if (_stack.Count != 7)
 										return SetError(ScriptError.InvalidStackOperation);
-
 
 									var arrayList = new List<byte[]>
 									{
-										_stack.Pop(),
-										_stack.Pop(),
-										_stack.Pop(),
-										_stack.Pop(),
-										_stack.Pop(),
+										_stack.Pop(), // SpvHeaders
+										_stack.Pop(), // MerkleProof
+										_stack.Pop(), // OutputIndex
+										_stack.Pop(), // Lock
+										_stack.Pop(), // CoinBase
+										_stack.Pop(), // Genesis
+										_stack.Pop(), // P2SH target
 									};
 
 									arrayList.Reverse();
 									var proof = SpvProof.CreateProof(arrayList);
 
-									// validate all items.
+									// validate the target is one of the outputs.
+									// currently only allow two outputs:
+									// - the spending of the lock 
+									// - the re-lock of the result
 
+									if(checker.Transaction.Outputs.Count != 2)
+										return SetError(ScriptError.WithdrawVerifyOutput);
+
+									var spender = checker.Transaction.Outputs.Where(o => o.ScriptPubKey == proof.DestinationScript);
+									if (spender.Count() != 1)
+										return SetError(ScriptError.WithdrawVerifyOutputscript);
+
+									// check that the output value is within the unlocked coins
+
+									var withdrawScript = new Script(new[] {new Op {Code = OpcodeType.OP_WITHDRAWPROOFVERIFY}});
+									var relocks = checker.Transaction.Outputs.Where(o => o.ScriptPubKey == withdrawScript);
+
+									if (relocks.Count() != 1)
+										return SetError(ScriptError.WithdrawVerifyOutput);
+
+									if (relocks.First().Value > checker.Amount)
+										return SetError(ScriptError.WithdrawVerifyOutputval);
+
+									// check that the Lock transaction is in the first header
+									var first = proof.SpvHeaders.Headers.First();
+									if (!proof.MerkleProof.Check(first.HashMerkleRoot))
+										return SetError(ScriptError.WithdrawVerifyLockTx);
+
+									// check that the coinbase is in the first header
+
+									if (!proof.MerkleProof.Check(first.HashMerkleRoot))
+										return SetError(ScriptError.WithdrawVerifyLockTx);
+
+									// verify the amount of work done
+									proof.SpvHeaders.Headers.Reverse();
+									var current = proof.SpvHeaders.Headers.First();
+
+									foreach (var header in proof.SpvHeaders.Headers.Skip(1))
+									{
+										if(current.HashPrevBlock != header.GetHash())
+											return SetError(ScriptError.WithdrawVerifyBlock);
+										current = header;
+
+										// TODO: check the work
+									}
+
+									_stack.Push(vchTrue);
 
 									break;
 								}

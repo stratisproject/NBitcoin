@@ -57,19 +57,15 @@ namespace NBitcoin.Tests
 			var proof = new SpvProof();
 			proof.CoinBase = block.Transactions.First();
 			proof.Lock = lockTrx;
+			proof.OutputIndex = 0;
 			var merkleBlock = new MerkleBlock(block, new[] {lockTrx.GetHash()});
 			proof.MerkleProof = merkleBlock.PartialMerkleTree;
 			proof.SpvHeaders = new SpvHeaders {Headers = new List<BlockHeader> {block.Header, block1.Header, block2.Header}};
 			proof.Genesis = network.GenesisHash;
-
+			proof.DestinationScript = key.ScriptPubKey;
 			// verify the transaction script
 
-			var scriptSignature = new Script(
-				Op.GetPushOp(proof.Genesis.ToBytes()),
-				Op.GetPushOp(proof.CoinBase.ToBytes()),
-				Op.GetPushOp(proof.Lock.ToBytes()),
-				Op.GetPushOp(proof.MerkleProof.ToBytes()),
-				Op.GetPushOp(proof.SpvHeaders.ToBytes()));
+			var scriptSignature = SpvProof.CreateScript(proof);
 
 			var withdrawTrx = new Transaction();
 			withdrawTrx.AddInput(new TxIn(new OutPoint(sidechainGenesis, 0), scriptSignature));
@@ -81,8 +77,8 @@ namespace NBitcoin.Tests
 			var scriptPubKey = sidechainGenesis.Outputs.First().ScriptPubKey;
 
 
-			var result = Script.VerifyScript(scriptSig, scriptPubKey, withdrawTrx, 0);
-
+			var result = Script.VerifyScript(scriptSig, scriptPubKey, withdrawTrx, 0, output.Value);
+			Assert.True(result);
 		}
 
 
