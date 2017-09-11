@@ -4,20 +4,52 @@ using System.Linq;
 
 namespace NBitcoin
 {
+	/// <summary>
+	/// An SpvProof (Simplified Payment Verification) that is used to proof an output is locked (undependable).
+	/// </summary>
 	public class SpvProof
 	{
+		/// <summary>
+		/// The genesis hash of the chain where the withdraw lock was created.
+		/// </summary>
 		public uint256 Genesis;
 
+		/// <summary>
+		/// A list of headers on the chain that confirmed the withdraw.
+		/// </summary>
+		/// <remarks>
+		/// The first header represents the block that contains the withdraw lock.
+		/// The rest of the headers represent work (how many blocks the withdraw is berried under).
+		/// The headers are expected to be a chained of block headers.
+		/// </remarks>
 		public SpvHeaders SpvHeaders;
 
+		/// <summary>
+		/// A transaction that locked some coins to a special op code <see cref="OpcodeType.OP_WITHDRAWPROOFVERIFY"/>.
+		/// </summary>
 		public Transaction Lock;
 
+		/// <summary>
+		/// The index of the output in the that lock transaction that is being refereed to by this SPV Proof.
+		/// </summary>
 		public int OutputIndex;
 
+		/// <summary>
+		/// The coinbase of the block that confirmed the locked transaction.
+		/// </summary>
+		/// <remarks>
+		/// The coinbase can be used to know the block height of the locked transaction.
+		/// </remarks>
 	    public Transaction CoinBase;
 
+		/// <summary>
+		/// A proof that verifies the locking transaction was included in a block.
+		/// </summary>
 		public PartialMerkleTree MerkleProof;
 
+		/// <summary>
+		/// The recipient of the locking transaction.
+		/// </summary>
 		public Script DestinationScript;
 
 		public static Script CreateScript(SpvProof proof)
@@ -48,7 +80,7 @@ namespace NBitcoin
 			return proof;
 		}
 
-		public static int ReadIndex(byte[] array)
+		private static int ReadIndex(byte[] array)
 		{
 			using (var mem = new MemoryStream(array))
 			{
@@ -59,7 +91,7 @@ namespace NBitcoin
 			}
 		}
 
-		public static byte[] WriteIndex(int number)
+		private static byte[] WriteIndex(int number)
 		{
 			using (var mem = new MemoryStream())
 			{
@@ -70,6 +102,9 @@ namespace NBitcoin
 		}
 	}
 
+	/// <summary>
+	/// A class to serialize a list of block headers.
+	/// </summary>
 	public class SpvHeaders : IBitcoinSerializable
 	{
 		public List<BlockHeader> Headers;

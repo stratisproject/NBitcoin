@@ -1499,7 +1499,7 @@ namespace NBitcoin
 										_stack.Pop(), // Lock
 										_stack.Pop(), // CoinBase
 										_stack.Pop(), // Genesis
-										_stack.Pop(), // P2SH target
+										_stack.Pop(), // SciptPubkey target
 									};
 
 									arrayList.Reverse();
@@ -1518,7 +1518,6 @@ namespace NBitcoin
 										return SetError(ScriptError.WithdrawVerifyOutputscript);
 
 									// check that the output value is within the unlocked coins
-
 									var withdrawScript = new Script(new[] {new Op {Code = OpcodeType.OP_WITHDRAWPROOFVERIFY}});
 									var relocks = checker.Transaction.Outputs.Where(o => o.ScriptPubKey == withdrawScript);
 
@@ -1534,7 +1533,6 @@ namespace NBitcoin
 										return SetError(ScriptError.WithdrawVerifyLockTx);
 
 									// check that the coinbase is in the first header
-
 									if (!proof.MerkleProof.Check(first.HashMerkleRoot))
 										return SetError(ScriptError.WithdrawVerifyLockTx);
 

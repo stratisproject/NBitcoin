@@ -28,8 +28,6 @@ namespace NBitcoin.Tests
 				ScriptPubKey = new Script(new Op
 				{
 					Code = OpcodeType.OP_WITHDRAWPROOFVERIFY,
-					//PushData = new[] {(byte) 42}
-
 				})
 			});
 
