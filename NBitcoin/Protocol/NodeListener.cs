@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace NBitcoin.Protocol
 {
@@ -39,17 +37,17 @@ namespace NBitcoin.Protocol
 		public TPayload ReceivePayload<TPayload>(CancellationToken cancellationToken = default(CancellationToken))
 			where TPayload : Payload
 		{
-			if(!Node.IsConnected)
+			if (!Node.IsConnected)
 				throw new InvalidOperationException("The node is not in a connected state");
 			Queue<IncomingMessage> pushedAside = new Queue<IncomingMessage>();
 			try
 			{
-				while(true)
+				while (true)
 				{
-					var message = ReceiveMessage(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, Node._Connection.Cancel.Token).Token);
-					if(_Predicates.All(p => p(message)))
+					var message = ReceiveMessage(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, Node.Connection.Cancel.Token).Token);
+					if (_Predicates.All(p => p(message)))
 					{
-						if(message.Message.Payload is TPayload)
+						if (message.Message.Payload is TPayload)
 							return (TPayload)message.Message.Payload;
 						else
 						{
@@ -58,15 +56,15 @@ namespace NBitcoin.Protocol
 					}
 				}
 			}
-			catch(OperationCanceledException)
+			catch (OperationCanceledException)
 			{
-				if(Node._Connection.Cancel.IsCancellationRequested)
+				if (Node.Connection.Cancel.IsCancellationRequested)
 					throw new InvalidOperationException("The node is not in a connected state");
 				throw;
 			}
 			finally
 			{
-				while(pushedAside.Count != 0)
+				while (pushedAside.Count != 0)
 					PushMessage(pushedAside.Dequeue());
 			}
 		}
@@ -77,7 +75,7 @@ namespace NBitcoin.Protocol
 
 		public void Dispose()
 		{
-			if(_Subscription != null)
+			if (_Subscription != null)
 				_Subscription.Dispose();
 		}
 
