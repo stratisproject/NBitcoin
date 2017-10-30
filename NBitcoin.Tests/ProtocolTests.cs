@@ -403,26 +403,27 @@ namespace NBitcoin.Tests
 		[Fact]
 		public void CanConnectToRandomNode()
 		{
-			Stopwatch watch = new Stopwatch();
-			NodeConnectionParameters parameters = new NodeConnectionParameters();
+			var watch = new Stopwatch();
+			var parameters = new NodeConnectionParameters();
+
 			var addrman = GetCachedAddrMan("addrmancache.dat");
 			parameters.TemplateBehaviors.Add(new AddressManagerBehavior(addrman)
 			{
 				PeersToDiscover = 50
 			});
+
 			watch.Start();
-			IPEndPoint[] connectedEndpoints = null;
-			using (var node = Node.Connect(Network.Main, parameters, connectedEndpoints))
-			{
-				var timeToFind = watch.Elapsed;
-				node.VersionHandshake();
-				node.Dispose();
-				watch.Restart();
-				using (var node2 = Node.Connect(Network.Main, parameters, connectedEndpoints))
-				{
-					var timeToFind2 = watch.Elapsed;
-				}
-			}
+
+			Node node = Node.Connect(Network.Main, parameters);
+			TimeSpan timeToFind = watch.Elapsed;
+			node.VersionHandshake();
+			node.Disconnect();
+
+			watch.Restart();
+			Node node2 = Node.Connect(Network.Main, parameters);
+			TimeSpan timeToFind2 = watch.Elapsed;
+			node.Disconnect();
+
 			addrman.SavePeerFile("addrmancache.dat", Network.Main);
 		}
 

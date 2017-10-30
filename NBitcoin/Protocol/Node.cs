@@ -111,7 +111,7 @@ namespace NBitcoin.Protocol
 					return _Socket;
 				}
 			}
-			private readonly ManualResetEvent _Disconnected;
+			private  ManualResetEvent _Disconnected;
 			public ManualResetEvent Disconnected
 			{
 				get
@@ -119,7 +119,7 @@ namespace NBitcoin.Protocol
 					return _Disconnected;
 				}
 			}
-			private readonly CancellationTokenSource _Cancel;
+			private  CancellationTokenSource _Cancel;
 			public CancellationTokenSource Cancel
 			{
 				get
@@ -144,13 +144,14 @@ namespace NBitcoin.Protocol
 			{
 				_Node = node;
 				_Socket = socket;
-				_Disconnected = new ManualResetEvent(false);
-				_Cancel = new CancellationTokenSource();
 			}
 
 			internal BlockingCollection<SentMessage> Messages = new BlockingCollection<SentMessage>(new ConcurrentQueue<SentMessage>());
 			public void BeginListen()
 			{
+				_Disconnected = new ManualResetEvent(false);
+				_Cancel = new CancellationTokenSource();
+				
 				new Thread(() =>
 				{
 					SentMessage processing = null;
@@ -231,7 +232,7 @@ namespace NBitcoin.Protocol
 					}
 					Messages = new BlockingCollection<SentMessage>(new ConcurrentQueue<SentMessage>());
 					NodeServerTrace.Information("Stop sending");
-					Cleanup(unhandledException);
+					EndListen(unhandledException);
 				}).Start();
 				new Thread(() =>
 				{
@@ -270,17 +271,18 @@ namespace NBitcoin.Protocol
 							unhandledException = ex;
 						}
 						NodeServerTrace.Information("Stop listening");
-						Cleanup(unhandledException);
+						EndListen(unhandledException);
 					}
 				}).Start();
 			}
 
 			int _CleaningUp;
 			public int _ListenerThreadId;
-			private void Cleanup(Exception unhandledException)
+			private void EndListen(Exception unhandledException)
 			{
 				if(Interlocked.CompareExchange(ref _CleaningUp, 1, 0) == 1)
 					return;
+
 				if(!Cancel.IsCancellationRequested)
 				{
 					NodeServerTrace.Error("Connection to server stopped unexpectedly", unhandledException);
@@ -295,10 +297,15 @@ namespace NBitcoin.Protocol
 				if(Node.State != NodeState.Failed)
 					Node.State = NodeState.Offline;
 
-				_Cancel.Cancel();
+				if(_Cancel.IsCancellationRequested == false)
+					_Cancel.Cancel();
+
+				if(_Disconnected.GetSafeWaitHandle().IsClosed == false)
+					_Disconnected.Set();
+
 				Utils.SafeCloseSocket(Socket);
-				_Disconnected.Set(); //Set before behavior detach to prevent deadlock
-				foreach(var behavior in _Node.Behaviors)
+
+				foreach (var behavior in _Node.Behaviors)
 				{
 					try
 					{
@@ -311,6 +318,11 @@ namespace NBitcoin.Protocol
 				}
 			}
 
+			internal void CleanUp()
+			{
+				_Disconnected.Dispose();				
+				_Cancel.Dispose();
+			}
 		}
 
 		public DateTimeOffset ConnectedAt
@@ -675,6 +687,7 @@ namespace NBitcoin.Protocol
 			socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
 
 			_Connection = new NodeConnection(this, socket);
+
 			socket.ReceiveBufferSize = parameters.ReceiveBufferSize;
 			socket.SendBufferSize = parameters.SendBufferSize;
 			using(TraceCorrelation.Open())
@@ -1074,47 +1087,69 @@ namespace NBitcoin.Protocol
 			}
 		}
 
-		public void Disconnect()
-		{
-			Disconnect(null, null);
-		}
-
 		int _Disconnecting;
 
-		public void Disconnect(string reason, Exception exception = null)
+		/// <summary>
+		/// Disconnects the node and checks the listener thread.
+		/// </summary>
+		public void Disconnect(string reason = null)
 		{
-			DisconnectAsync(reason, exception);
-			AssertNoListeningThread();
-			_Connection.Disconnected.WaitOne();
+			if (IsConnected == false)
+				return;
+
+			DisconnectNode(reason, null);
+
+			try
+			{
+				AssertListenerThreadIsNotCurrentThread();
+				_Connection.Disconnected.WaitOne();
+			}
+			catch (InvalidOperationException)
+			{
+				throw;
+			}
+			finally
+			{
+				_Connection.CleanUp();
+			}
 		}
 
-		private void AssertNoListeningThread()
+		/// <summary>
+		/// Disconnects the node without checking the listener thread.
+		/// </summary>
+		public void DisconnectAsync(string reason = null, Exception exception = null)
 		{
-			if(_Connection._ListenerThreadId == Thread.CurrentThread.ManagedThreadId)
-				throw new InvalidOperationException("Using Disconnect on this thread would result in a deadlock, use DisconnectAsync instead");
-		}
-		public void DisconnectAsync()
-		{
-			DisconnectAsync(null, null);
-		}
-		public void DisconnectAsync(string reason, Exception exception = null)
-		{
-			if(!IsConnected)
+			if(IsConnected == false)
 				return;
-			if(Interlocked.CompareExchange(ref _Disconnecting, 1, 0) == 1)
+
+			DisconnectNode(reason, exception);
+			_Connection.CleanUp();
+		}
+
+		private void DisconnectNode(string reason = null, Exception exception = null)
+		{
+			if (Interlocked.CompareExchange(ref _Disconnecting, 1, 0) == 1)
 				return;
-			using(TraceCorrelation.Open())
+
+			using (TraceCorrelation.Open())
 			{
 				NodeServerTrace.Information("Disconnection request " + reason);
 				State = NodeState.Disconnecting;
 				_Connection.Cancel.Cancel();
-				if(DisconnectReason == null)
+
+				if (DisconnectReason == null)
 					DisconnectReason = new NodeDisconnectReason()
 					{
 						Reason = reason,
 						Exception = exception
 					};
 			}
+		}
+
+		private void AssertListenerThreadIsNotCurrentThread()
+		{
+			if (_Connection._ListenerThreadId == Thread.CurrentThread.ManagedThreadId)
+				throw new InvalidOperationException("Using Disconnect on this thread would result in a deadlock, use DisconnectAsync instead");
 		}
 
 		TransactionOptions _PreferredTransactionOptions = TransactionOptions.All;
@@ -1378,7 +1413,7 @@ namespace NBitcoin.Protocol
 		/// <exception cref="System.InvalidOperationException">Thrown if used on the listener's thread, as it would result in a deadlock</exception>
 		public NodeListener CreateListener()
 		{
-			AssertNoListeningThread();
+			AssertListenerThreadIsNotCurrentThread();
 			return new NodeListener(this);
 		}
 
