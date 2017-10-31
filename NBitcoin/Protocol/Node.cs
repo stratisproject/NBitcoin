@@ -432,7 +432,6 @@ namespace NBitcoin.Protocol
 			FireFilters(enumerator, message);
 		}
 
-
 		private void OnSendingMessage(Payload payload, Action final)
 		{
 			var enumerator = Filters.Concat(new[] { new ActionFilter(null, (n, p, a) => final()) }).GetEnumerator();
@@ -454,7 +453,6 @@ namespace NBitcoin.Protocol
 				}
 			}
 		}
-
 
 		private void FireFilters(IEnumerator<INodeFilter> enumerator, IncomingMessage message)
 		{
@@ -492,10 +490,7 @@ namespace NBitcoin.Protocol
 			}
 		}
 
-
 		internal readonly NodeConnection _Connection;
-
-
 
 		/// <summary>
 		/// Connect to a random node on the network
@@ -752,6 +747,7 @@ namespace NBitcoin.Protocol
 				_Connection.BeginListen();
 			}
 		}
+
 		internal Node(NetworkAddress peer, Network network, NodeConnectionParameters parameters, Socket socket, VersionPayload peerVersion)
 		{
 			_RemoteSocketAddress = ((IPEndPoint)socket.RemoteEndPoint).Address;
@@ -966,15 +962,6 @@ namespace NBitcoin.Protocol
 				return _MessageProducer;
 			}
 		}
-
-		public TPayload ReceiveMessage<TPayload>(TimeSpan timeout) where TPayload : Payload
-		{
-			var source = new CancellationTokenSource();
-			source.CancelAfter(timeout);
-			return ReceiveMessage<TPayload>(source.Token);
-		}
-
-
 
 		public TPayload ReceiveMessage<TPayload>(CancellationToken cancellationToken = default(CancellationToken)) where TPayload : Payload
 		{
@@ -1225,6 +1212,7 @@ namespace NBitcoin.Protocol
 			SynchronizeChain(chain, hashStop, cancellationToken);
 			return chain;
 		}
+
 		public IEnumerable<ChainedBlock> GetHeadersFromFork(ChainedBlock currentTip,
 														uint256 hashStop = null,
 														CancellationToken cancellationToken = default(CancellationToken))
@@ -1265,10 +1253,13 @@ namespace NBitcoin.Protocol
 								break; //Send a new GetHeaders
 							}
 						}
+
 						if(headers.Headers.Count == 0 && PeerVersion.StartHeight == 0 && currentTip.HashBlock == Network.GenesisHash) //In the special case where the remote node is at height 0 as well as us, then the headers count will be 0
 							yield break;
+
 						if(headers.Headers.Count == 1 && headers.Headers[0].GetHash() == currentTip.HashBlock)
 							yield break;
+
 						foreach(var header in headers.Headers)
 						{
 							var h = header.GetHash();
@@ -1462,9 +1453,12 @@ namespace NBitcoin.Protocol
 		public Transaction[] GetMempoolTransactions(uint256[] txIds, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			AssertState(NodeState.HandShaked);
+
 			if(txIds.Length == 0)
 				return new Transaction[0];
+
 			List<Transaction> result = new List<Transaction>();
+
 			using(var listener = CreateListener().Where(m => m.Message.Payload is TxPayload || m.Message.Payload is NotFoundPayload))
 			{
 				foreach(var batch in txIds.Partition(500))
@@ -1474,17 +1468,23 @@ namespace NBitcoin.Protocol
 						Type = AddSupportedOptions(InventoryType.MSG_TX),
 						Hash = txid
 					}).ToArray()));
+
 					try
 					{
-						List<Transaction> batchResult = new List<NBitcoin.Transaction>();
+						List<Transaction> batchResult = new List<Transaction>();
 						while(batchResult.Count < batch.Count)
 						{
-							CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10.0));
-							var payload = listener.ReceivePayload<Payload>(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token).Token);
-							if(payload is NotFoundPayload)
-								batchResult.Add(null);
-							else
-								batchResult.Add(((TxPayload)payload).Object);
+							using(var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10.0)))
+							{ 
+								using(var receiveTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token))
+								{
+									var payload = listener.ReceivePayload<Payload>(receiveTimeout.Token);
+									if(payload is NotFoundPayload)
+										batchResult.Add(null);
+									else
+										batchResult.Add(((TxPayload)payload).Object);
+								}
+							}
 						}
 						result.AddRange(batchResult);
 					}
@@ -1497,6 +1497,7 @@ namespace NBitcoin.Protocol
 					}
 				}
 			}
+
 			return result.Where(r => r != null).ToArray();
 		}
 
