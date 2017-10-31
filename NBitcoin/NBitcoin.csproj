@@ -7,11 +7,11 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>4.0.0.32</Version>
+    <Version>4.0.0.33</Version>
   </PropertyGroup>
   
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>netstandard1.6;net461</TargetFrameworks>
     <RootNamespace>NBitcoin</RootNamespace>
     <PackageId>NStratis</PackageId>
     <Authors>NStratis</Authors>
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;NETSTANDARD1_6;NETCORE;NOSTRNORMALIZE;NOCUSTOMSSLVALIDATION;;NETSTANDARD1_6</DefineConstants>
+    <DefineConstants>TRACE;NETSTANDARD1_6;NETCORE;NOSTRNORMALIZE;NOCUSTOMSSLVALIDATION;</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
