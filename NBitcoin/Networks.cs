@@ -1,9 +1,9 @@
-﻿using NBitcoin.BouncyCastle.Math;
-using NBitcoin.DataEncoders;
-using NBitcoin.Protocol;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using NBitcoin.BouncyCastle.Math;
+using NBitcoin.DataEncoders;
+using NBitcoin.Protocol;
 
 namespace NBitcoin
 {
@@ -170,8 +170,10 @@ namespace NBitcoin
 
 				.AddDNSSeeds(new[]
 				{
-					new DNSSeedData("seed.stratisplatform.com", "seed.stratisplatform.com"),
-					new DNSSeedData("seed.cloudstratis.com", "seed.cloudstratis.com")
+					new DNSSeedData("seednode1.stratisplatform.com", "seednode1.stratisplatform.com"),
+					new DNSSeedData("seednode2.stratis.cloud", "seednode2.stratis.cloud"),
+					new DNSSeedData("seednode3.stratisplatform.com", "seednode3.stratisplatform.com"),
+					new DNSSeedData("seednode4.stratis.cloud", "seednode4.stratis.cloud")
 				})
 #endif
 
@@ -260,7 +262,9 @@ namespace NBitcoin
 #if !NOSOCKET
 				.AddDNSSeeds(new[]
 				{
-					new DNSSeedData("stratisplatform.com", "testnode1.stratisplatform.com"),
+					new DNSSeedData("testnode1.stratisplatform.com", "testnode1.stratisplatform.com"),
+					new DNSSeedData("testnode2.stratis.cloud", "testnode2.stratis.cloud"),
+					new DNSSeedData("testnode3.stratisplatform.com", "testnode3.stratisplatform.com")
 				});
 
 				builder.AddSeeds(new[] { new NetworkAddress(IPAddress.Parse("51.141.28.47"), builder._Port) }); // the c# testnet node
