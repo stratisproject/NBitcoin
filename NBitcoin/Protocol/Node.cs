@@ -1101,7 +1101,7 @@ namespace NBitcoin.Protocol
 
 			try
 			{
-				AssertListenerThreadIsNotCurrentThread();
+				AssertNoListeningThread();
 				_Connection.Disconnected.WaitOne();
 			}
 			catch (InvalidOperationException)
@@ -1146,7 +1146,7 @@ namespace NBitcoin.Protocol
 			}
 		}
 
-		private void AssertListenerThreadIsNotCurrentThread()
+		private void AssertNoListeningThread()
 		{
 			if (_Connection._ListenerThreadId == Thread.CurrentThread.ManagedThreadId)
 				throw new InvalidOperationException("Using Disconnect on this thread would result in a deadlock, use DisconnectAsync instead");
@@ -1413,7 +1413,7 @@ namespace NBitcoin.Protocol
 		/// <exception cref="System.InvalidOperationException">Thrown if used on the listener's thread, as it would result in a deadlock</exception>
 		public NodeListener CreateListener()
 		{
-			AssertListenerThreadIsNotCurrentThread();
+			AssertNoListeningThread();
 			return new NodeListener(this);
 		}
 
