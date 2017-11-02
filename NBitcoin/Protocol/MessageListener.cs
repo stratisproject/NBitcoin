@@ -1,4 +1,5 @@
 ﻿#if !NOSOCKET
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace NBitcoin.Protocol
 {
-
 	public interface MessageListener<in T>
 	{
 		void PushMessage(T message);
@@ -35,6 +35,7 @@ namespace NBitcoin.Protocol
 				throw new ArgumentNullException("process");
 			_Process = process;
 		}
+
 		#region MessageListener<T> Members
 
 		public void PushMessage(T message)
@@ -85,6 +86,7 @@ namespace NBitcoin.Protocol
 				}
 			})).Start();
 		}
+
 		BlockingCollection<T> _MessageQueue = new BlockingCollection<T>(new ConcurrentQueue<T>());
 		public BlockingCollection<T> MessageQueue
 		{
@@ -93,7 +95,6 @@ namespace NBitcoin.Protocol
 				return _MessageQueue;
 			}
 		}
-
 
 		#region MessageListener Members
 
@@ -107,20 +108,21 @@ namespace NBitcoin.Protocol
 		#region IDisposable Members
 
 		CancellationTokenSource cancellationSource = new CancellationTokenSource();
+
 		public void Dispose()
 		{
 			if(cancellationSource.IsCancellationRequested)
 				return;
+
 			cancellationSource.Cancel();
+			cancellationSource.Dispose();
 		}
 
 		#endregion
-
 	}
 
 	public class PollMessageListener<T> : MessageListener<T>
 	{
-
 		BlockingCollection<T> _MessageQueue = new BlockingCollection<T>(new ConcurrentQueue<T>());
 		public BlockingCollection<T> MessageQueue
 		{
@@ -145,4 +147,5 @@ namespace NBitcoin.Protocol
 		#endregion
 	}
 }
+
 #endif
