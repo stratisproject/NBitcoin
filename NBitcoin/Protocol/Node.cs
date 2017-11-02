@@ -297,7 +297,7 @@ namespace NBitcoin.Protocol
 				if(Node.State != NodeState.Failed)
 					Node.State = NodeState.Offline;
 
-				if(_Cancel.IsCancellationRequested == false)
+				if (_Cancel.IsCancellationRequested == false)
 					_Cancel.Cancel();
 
 				if(_Disconnected.GetSafeWaitHandle().IsClosed == false)
@@ -963,6 +963,13 @@ namespace NBitcoin.Protocol
 			}
 		}
 
+		public TPayload ReceiveMessage<TPayload>(TimeSpan timeout) where TPayload : Payload
+		{
+			var source = new CancellationTokenSource();
+			source.CancelAfter(timeout);
+			return ReceiveMessage<TPayload>(source.Token);
+		}
+
 		public TPayload ReceiveMessage<TPayload>(CancellationToken cancellationToken = default(CancellationToken)) where TPayload : Payload
 		{
 			using(var listener = new NodeListener(this))
@@ -1090,10 +1097,6 @@ namespace NBitcoin.Protocol
 			{
 				AssertNoListeningThread();
 				_Connection.Disconnected.WaitOne();
-			}
-			catch (InvalidOperationException)
-			{
-				throw;
 			}
 			finally
 			{
