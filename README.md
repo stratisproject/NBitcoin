@@ -1,4 +1,8 @@
 
+### This project is not supported anymore all development is done on [FullNode](https://github.com/stratisproject/StratisBitcoinFullNode)!   
+  
+
+
 ## NStratis is a fork of [NBitcoin](https://github.com/MetacoSA/NBitcoin) with additional support for:
 
 - ### POS (Proof of Stake) mining algorithm
