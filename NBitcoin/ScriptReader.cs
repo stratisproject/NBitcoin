@@ -339,10 +339,7 @@ namespace NBitcoin
 			return op;
 		}
 
-		internal Op()
-		{
 
-		}
 		string _Name;
 		public string Name
 		{
